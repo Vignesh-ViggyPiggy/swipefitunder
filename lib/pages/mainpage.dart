@@ -1,6 +1,9 @@
 import 'package:camera/camera.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:swipefit/main.dart';
+import 'package:swipefit/pages/Friends.dart';
+//import 'package:swipefit/pages/Home.dart';
 import 'package:swipefit/pages/profilepage.dart';
 // import 'package:swipefit/pages/homepage.dart';
 import 'package:swipefit/pages/home2.dart';
@@ -16,18 +19,24 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _currentIndex = 0;
-  // Current index of the selected page
-  // List of pages
-
-  final List<Widget> _pages = [
-    const HomePage(),
-    CameraApp(camera: cameras),
-    const StorePage(),
-    const ProfilePage(),
-  ];
+  List<Map<String, dynamic>> cartImages = [];
+  void addCartItem(Map<String, dynamic> item) {
+    setState(() {
+      cartImages.add(item);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> _pages = [
+      const HomePage(),
+      FriendsPage(),
+      //Home(),
+      CameraApp(camera: cameras),
+      StorePage(addCartItem: addCartItem),
+      ProfilePage(cartImages: cartImages),
+    ];
+
     return Scaffold(
       body: _pages[_currentIndex], // Display the selected page
       bottomNavigationBar: BottomNavigationBar(
@@ -45,6 +54,10 @@ class _MainPageState extends State<MainPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: "Home",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people),
+            label: "Friend",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.add),

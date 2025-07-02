@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:swipefit/resources/auth_methods.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({Key? key}) : super(key: key);
@@ -10,6 +11,10 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
+    TextEditingController _nameController = TextEditingController();
+    TextEditingController _emailController = TextEditingController();
+    TextEditingController _passwordController = TextEditingController();
+    TextEditingController _confirmPasswordController = TextEditingController();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -41,6 +46,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
             // Name Field
             TextField(
+              controller: _nameController,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 filled: true,
@@ -57,6 +63,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
             // Email Field
             TextField(
+              controller: _emailController,
               keyboardType: TextInputType.emailAddress,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
@@ -74,6 +81,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
             // Password Field
             TextField(
+              controller: _passwordController,
               obscureText: true,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
@@ -91,6 +99,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
             // Confirm Password Field
             TextField(
+              controller: _confirmPasswordController,
               obscureText: true,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
@@ -110,7 +119,20 @@ class _SignUpPageState extends State<SignUpPage> {
             Flexible(
               flex: 3,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () async {
+                  if (_passwordController.text ==
+                      _confirmPasswordController.text) {
+                    AuthMethods().signUpUser(
+                        email: _emailController.text,
+                        password: _passwordController.text,
+                        username: _nameController.text,
+                        context: context);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text("Passwords do not match"),
+                    ));
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.grey[800],
                   shape: RoundedRectangleBorder(

@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:swipefit/resources/auth_methods.dart';
 
 enum CardStatus { like, dislike, superLike }
 
@@ -195,3 +196,37 @@ class UploadNotifier extends AsyncNotifier<UploadState> {
     }
   }
 }
+
+final items_from_databaseProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  return await AuthMethods().storeData();
+});
+
+final useridProvider = FutureProvider<String>((ref) async {
+  return await AuthMethods().getCurrentUserId();
+});
+
+// final posts_from_databaseProvider =
+//     FutureProvider<List<Map<String, dynamic>>>((ref) async {
+//   final userId = ref.watch(useridProvider);
+//   return await AuthMethods().postData(userId as String);
+// });
+// final usernamesProvider =
+//     FutureProvider.family<List<String>, String>((ref, query) async {
+//   return await AuthMethods().getUsernamesContaining(query);
+// });
+final usernamesProvider =
+    FutureProvider.family<Map<String, String>, String>((ref, query) async {
+  return await AuthMethods().getUsernamesContaining(query);
+});
+
+// final receivedRequestsProvider = FutureProvider<List<String>>((ref) async {
+//   final uid = await ref.watch(useridProvider.future);
+//   return await AuthMethods().getReceivedRequests(uid);
+// });
+
+// final usernamesFromReceivedRequestsProvider =
+//     FutureProvider<Map<String, String>>((ref) async {
+//   final receivedRequests = await ref.watch(receivedRequestsProvider.future);
+//   return await AuthMethods().getUsernamesFromUids(receivedRequests);
+// });

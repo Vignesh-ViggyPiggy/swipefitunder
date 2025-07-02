@@ -1,32 +1,25 @@
+/*
+import 'dart:async';
+import 'dart:math';
+import 'package:swipefit/provider/ExploreCardProvider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
+import 'package:swipefit/provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class StorePage extends StatefulWidget {
-  const StorePage({super.key});
+class StorePage extends ConsumerStatefulWidget {
+  final Function addCartItem;
+
+  const StorePage({super.key, required this.addCartItem});
 
   @override
-  State<StorePage> createState() => _StorePageState();
+  ConsumerState<StorePage> createState() => _StorePageState();
 }
 
-class _StorePageState extends State<StorePage> {
+class _StorePageState extends ConsumerState<StorePage> {
   int _selectedcloth = -1;
-  final images = [
-    'https://firebasestorage.googleapis.com/v0/b/ratefit-bed29.appspot.com/o/Cloths%2F00962381807-e0.jpg?alt=media&token=8c1392ec-9fc8-485b-840f-2d030a6aa821',
-    'https://firebasestorage.googleapis.com/v0/b/ratefit-bed29.appspot.com/o/Cloths%2F01887450800-e1.jpg?alt=media&token=9065579a-1d09-49fa-868d-6c62776624cd',
-    'https://firebasestorage.googleapis.com/v0/b/ratefit-bed29.appspot.com/o/Cloths%2F04090335807-e2.jpg?alt=media&token=8dd51ff3-528f-4c0a-a887-db78c8ad2f28',
-    'https://firebasestorage.googleapis.com/v0/b/ratefit-bed29.appspot.com/o/Cloths%2F04393350800-e3.jpg?alt=media&token=10c99a3c-6154-49c5-ba0e-e19b3367baae',
-    'https://firebasestorage.googleapis.com/v0/b/ratefit-bed29.appspot.com/o/Cloths%2F04805305251-e4.jpg?alt=media&token=cca33518-f5b0-424f-ac7c-475348902f28',
-    'https://firebasestorage.googleapis.com/v0/b/ratefit-bed29.appspot.com/o/Cloths%2F05679250401-e5.jpg?alt=media&token=b90c0efd-4c03-4003-8c9a-cc1fa3b67e08',
-  ];
-
-  final List<String> image_link = [
-    'https://www.google.com/maps',
-    'https://www.zara.com/in/en/basic-heavy-weight-t-shirt-p01887450.html?v1=364113271',
-    'https://www.zara.com/in/en/printed-knit-t-shirt-p04090335.html?v1=390672229',
-    'https://www.zara.com/in/en/hoodie-p00761330.html?v1=381137893',
-    'https://www.zara.com/in/en/spray-print-knit-t-shirt-p04805305.html?v1=365910331',
-    'https://www.zara.com/in/en/abstract-print-shirt-p05679250.html?v1=372994197'
-  ];
+  final List<Map<String, dynamic>> cartImages =
+      []; // new list to store cart images
 
   Future<void> _launchUrl(String url) async {
     if (!await launchUrl(Uri.parse(url))) {
@@ -36,65 +29,642 @@ class _StorePageState extends State<StorePage> {
 
   @override
   Widget build(BuildContext context) {
+    //final images = ref.watch(imagesProvider);
+    //final image_link = ref.watch(imageLinkProvider);
+    final item_list = ref.watch(items_from_databaseProvider);
     final size = MediaQuery.of(context).size;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("SWIPE FIT"),
-      ),
-      body: SingleChildScrollView(
-        child: Container(
-            height: size.height,
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 8.0,
-                crossAxisSpacing: 8.0,
-              ),
-              padding: const EdgeInsets.all(8.0),
-              itemCount: images.length,
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedcloth = index;
-                    });
+
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    final cardHeight =
+        screenHeight / 1.618; // Card height is 1 / 1.618 of screen height
+    final cardWidth = cardHeight * .75;
+    final cardSize = Size(cardWidth, cardHeight);
+
+    print('Building Store');
+
+    final cardState = ref.watch(exploreCardProvider);
+
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text("SWIPE FIT"),
+          bottom: TabBar(
+            tabs: [
+              Tab(text: "Search"),
+              Tab(text: "Explore"),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            // Search Tab
+            SingleChildScrollView(
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.82,
+                child: item_list.when(
+                  data: (data) {
+                    return GridView.builder(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 8.0,
+                        crossAxisSpacing: 8.0,
+                      ),
+                      itemCount: data.length,
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedcloth = index;
+                            });
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color.fromARGB(255, 10, 10, 10),
+                              border: Border.all(
+                                  color: _selectedcloth == index
+                                      ? Colors.grey
+                                      : Colors.black),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Stack(
+                              children: [
+                                Center(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Image.network(
+                                      data[index]['ItemImage'],
+                                      width: size.width,
+                                      height: double.infinity,
+                                    ),
+                                  ),
+                                ),
+                                if (_selectedcloth == index)
+                                  Positioned(
+                                    bottom: 0,
+                                    left: 0,
+                                    right: 0,
+                                    child: Container(
+                                      color: Colors.black.withOpacity(0.5),
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              _launchUrl(
+                                                  data[index]['ItemLink']);
+                                            },
+                                            child: const Text(
+                                              "BUY",
+                                              style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Color.fromRGBO(
+                                                      224, 224, 224, 1)),
+                                            ),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              setState(() {
+                                                cartImages.add(data[index]);
+                                              });
+                                              widget.addCartItem(data[
+                                                  index]); // Add item to cart
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              minimumSize: const Size(100,
+                                                  40), // set a minimum size for the button
+                                            ),
+                                            child: const Text(
+                                              "ADD TO CART",
+                                              style: TextStyle(
+                                                  fontSize: 10,
+                                                  color: Color.fromRGBO(
+                                                      224,
+                                                      224,
+                                                      224,
+                                                      1)), // reduce font size to fit
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
                   },
-                  child: Container(
-                    decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 10, 10, 10),
-                        border: Border.all(
-                            color: _selectedcloth == index
-                                ? Colors.cyan
-                                : Colors.black),
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(5))),
-                    child: Center(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(
-                          images[index],
-                          width: size.width,
-                          height: double.infinity,
+                  error: (e, stackTrace) => Text('Error: $e'),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                ),
+              ),
+            ),
+            // Explore Tab
+
+            cardState.when(
+              data: (urlImages) {
+                if (urlImages.isEmpty) {
+                  return Center(
+                    child: ElevatedButton(
+                      child: const Text('Reset Cards'),
+                      onPressed: () =>
+                          ref.read(exploreCardProvider.notifier).resetUsers(),
+                    ),
+                  );
+                } else {
+                  return Column(
+                    children: [
+                      Center(
+                        child: Card(
+                          elevation: 5,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          child: SizedBox(
+                            child: Stack(
+                              alignment: Alignment.bottomLeft,
+                              children: [
+                                ...urlImages.map(
+                                  (urlImage) => TinderCard(
+                                    urlImage: urlImage,
+                                    isFront: urlImages.last == urlImage,
+                                    cardSize: cardSize,
+                                  ),
+                                ),
+                                // Profile Info Positioned
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                );
+                      const SizedBox(height: 20),
+
+                      // Bottom Action Buttons
+                    ],
+                  );
+                }
               },
-            )),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(child: Text('Error: $err')),
+            ),
+          ],
+        ),
       ),
-      floatingActionButton: _selectedcloth != -1
-          ? FloatingActionButton(
-              onPressed: () {
-                _launchUrl(image_link[_selectedcloth]);
-              },
-              backgroundColor: Colors.cyan,
-              child: const Text(
-                "BUY",
-                style: TextStyle(color: Colors.white),
-              ),
-            )
-          : null,
     );
   }
+}
+
+class TinderCard extends ConsumerStatefulWidget {
+  final String urlImage;
+  final bool isFront;
+  final Size cardSize;
+
+  const TinderCard({
+    required this.urlImage,
+    required this.isFront,
+    required this.cardSize,
+  });
+
+  @override
+  _TinderCardState createState() => _TinderCardState();
+}
+
+class _TinderCardState extends ConsumerState<TinderCard> {
+  bool _isDragging = false;
+  Timer? _draggingTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(exploreCardProvider.notifier).setScreenSize(widget.cardSize);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _draggingTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    //print('Building TinderCard: ${widget.urlImage}');
+    return SizedBox(
+      width: widget.cardSize.width,
+      height: widget.cardSize.height,
+      child: widget.isFront ? buildFrontCard() : buildCard(),
+    );
+  }
+
+  Widget buildFrontCard() {
+    final provider = ref.read(exploreCardProvider.notifier);
+    final notifier = ValueNotifier(provider);
+    return GestureDetector(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          //print('Widget rebuilt');
+          final provider = ref.read(exploreCardProvider.notifier);
+          final position = provider.position;
+          final angle = provider.angle;
+          final milliseconds = provider.isDragging ? 0 : 400;
+
+          final center = constraints.smallest.center(Offset.zero);
+          final rotatedAngle = angle * pi / 180;
+          final rotatedMatrix = Matrix4.identity()
+            ..translate(center.dx, center.dy)
+            ..rotateZ(rotatedAngle)
+            ..translate(-center.dx, -center.dy);
+
+          return AnimatedContainer(
+            curve: Curves.easeInOut,
+            duration: Duration(milliseconds: milliseconds),
+            transform: rotatedMatrix..translate(position.dx, position.dy),
+            child: buildCard(),
+          );
+        },
+      ),
+      onPanStart: (details) {
+        ref.read(exploreCardProvider.notifier).startPosition(details);
+        _isDragging = true;
+        _draggingTimer = Timer.periodic(Duration(milliseconds: 5), (timer) {
+          if (_isDragging) {
+            setState(() {
+              // Update the position here if needed
+            });
+          } else {
+            timer.cancel();
+          }
+        });
+      },
+      onPanUpdate: (details) {
+        ref.read(exploreCardProvider.notifier).updatePosition(details);
+        setState(() {
+          // Ensure the position is updated immediately
+        });
+      },
+      onPanEnd: (details) {
+        ref.read(exploreCardProvider.notifier).endPosition();
+        _isDragging = false;
+      },
+    );
+  }
+
+  Widget buildCard() => ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: NetworkImage(widget.urlImage),
+              fit: BoxFit.cover,
+              alignment: const Alignment(-0.3, 0),
+            ),
+          ),
+        ),
+      );
+}
+
+*/
+
+import 'dart:async';
+import 'dart:math';
+import 'package:swipefit/provider/ExploreCardProvider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/material.dart';
+import 'package:swipefit/provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+class StorePage extends ConsumerStatefulWidget {
+  final Function addCartItem;
+
+  const StorePage({super.key, required this.addCartItem});
+
+  @override
+  ConsumerState<StorePage> createState() => _StorePageState();
+}
+
+class _StorePageState extends ConsumerState<StorePage> {
+  int _selectedcloth = -1;
+  final List<Map<String, dynamic>> cartImages =
+      []; // new list to store cart images
+
+  Future<void> _launchUrl(String url) async {
+    if (!await launchUrl(Uri.parse(url))) {
+      throw Exception('Could not launch $url');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    //final images = ref.watch(imagesProvider);
+    //final image_link = ref.watch(imageLinkProvider);
+    final item_list = ref.watch(items_from_databaseProvider);
+    final size = MediaQuery.of(context).size;
+
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    final cardHeight =
+        screenHeight / 1.618; // Card height is 1 / 1.618 of screen height
+    final cardWidth = cardHeight * .75;
+    final cardSize = Size(cardWidth, cardHeight);
+
+    print('Building Store');
+
+    final cardState = ref.watch(exploreCardProvider);
+
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text("SWIPE FIT"),
+          bottom: TabBar(
+            tabs: [
+              Tab(text: "Search"),
+              Tab(text: "Explore"),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            // Search Tab
+            SingleChildScrollView(
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.82,
+                child: item_list.when(
+                  data: (data) {
+                    return GridView.builder(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 8.0,
+                        crossAxisSpacing: 8.0,
+                      ),
+                      itemCount: data.length,
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedcloth = index;
+                            });
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color.fromARGB(255, 10, 10, 10),
+                              border: Border.all(
+                                  color: _selectedcloth == index
+                                      ? Colors.grey
+                                      : Colors.black),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Stack(
+                              children: [
+                                Center(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Image.network(
+                                      data[index]['ItemImage'],
+                                      width: size.width,
+                                      height: double.infinity,
+                                    ),
+                                  ),
+                                ),
+                                if (_selectedcloth == index)
+                                  Positioned(
+                                    bottom: 0,
+                                    left: 0,
+                                    right: 0,
+                                    child: Container(
+                                      color: Colors.black.withOpacity(0.5),
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              _launchUrl(
+                                                  data[index]['ItemLink']);
+                                            },
+                                            child: const Text(
+                                              "BUY",
+                                              style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Color.fromRGBO(
+                                                      224, 224, 224, 1)),
+                                            ),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              setState(() {
+                                                cartImages.add(data[index]);
+                                              });
+                                              widget.addCartItem(data[
+                                                  index]); // Add item to cart
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              minimumSize: const Size(100,
+                                                  40), // set a minimum size for the button
+                                            ),
+                                            child: const Text(
+                                              "ADD TO CART",
+                                              style: TextStyle(
+                                                  fontSize: 10,
+                                                  color: Color.fromRGBO(
+                                                      224,
+                                                      224,
+                                                      224,
+                                                      1)), // reduce font size to fit
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  error: (e, stackTrace) => Text('Error: $e'),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                ),
+              ),
+            ),
+            // Explore Tab
+
+            cardState.when(
+              data: (urlImages) {
+                if (urlImages.isEmpty) {
+                  return Center(
+                    child: ElevatedButton(
+                      child: const Text('Reset Cards'),
+                      onPressed: () =>
+                          ref.read(exploreCardProvider.notifier).resetUsers(),
+                    ),
+                  );
+                } else {
+                  return Column(
+                    children: [
+                      Center(
+                        child: Card(
+                          elevation: 5,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          child: SizedBox(
+                            child: Stack(
+                              alignment: Alignment.bottomLeft,
+                              children: [
+                                ...urlImages.map(
+                                  (urlImage) => TinderCard(
+                                    urlImage: urlImage,
+                                    isFront: urlImages.last == urlImage,
+                                    cardSize: cardSize,
+                                  ),
+                                ),
+                                // Profile Info Positioned
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Bottom Action Buttons
+                    ],
+                  );
+                }
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(child: Text('Error: $err')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class TinderCard extends ConsumerStatefulWidget {
+  final String urlImage;
+  final bool isFront;
+  final Size cardSize;
+
+  const TinderCard({
+    required this.urlImage,
+    required this.isFront,
+    required this.cardSize,
+  });
+
+  @override
+  _TinderCardState createState() => _TinderCardState();
+}
+
+class _TinderCardState extends ConsumerState<TinderCard> {
+  bool _isDragging = false;
+  Timer? _draggingTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(exploreCardProvider.notifier).setScreenSize(widget.cardSize);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _draggingTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    //print('Building TinderCard: ${widget.urlImage}');
+    return SizedBox(
+      width: widget.cardSize.width,
+      height: widget.cardSize.height,
+      child: widget.isFront ? buildFrontCard() : buildCard(),
+    );
+  }
+
+  Widget buildFrontCard() {
+    final provider = ref.read(exploreCardProvider.notifier);
+    final notifier = ValueNotifier(provider);
+    return GestureDetector(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          //print('Widget rebuilt');
+          final provider = ref.read(exploreCardProvider.notifier);
+          final position = provider.position;
+          final angle = provider.angle;
+          final milliseconds = provider.isDragging ? 0 : 400;
+
+          final center = constraints.smallest.center(Offset.zero);
+          final rotatedAngle = angle * pi / 180;
+          final rotatedMatrix = Matrix4.identity()
+            ..translate(center.dx, center.dy)
+            ..rotateZ(rotatedAngle)
+            ..translate(-center.dx, -center.dy);
+
+          return AnimatedContainer(
+            curve: Curves.easeInOut,
+            duration: Duration(milliseconds: milliseconds),
+            transform: rotatedMatrix..translate(position.dx, position.dy),
+            child: buildCard(),
+          );
+        },
+      ),
+      onPanStart: (details) {
+        ref.read(exploreCardProvider.notifier).startPosition(details);
+        _isDragging = true;
+        _draggingTimer = Timer.periodic(Duration(milliseconds: 5), (timer) {
+          if (_isDragging) {
+            setState(() {
+              // Update the position here if needed
+            });
+          } else {
+            timer.cancel();
+          }
+        });
+      },
+      onPanUpdate: (details) {
+        ref.read(exploreCardProvider.notifier).updatePosition(details);
+        setState(() {
+          // Ensure the position is updated immediately
+        });
+      },
+      onPanEnd: (details) {
+        ref.read(exploreCardProvider.notifier).endPosition();
+        _isDragging = false;
+      },
+    );
+  }
+
+  Widget buildCard() => ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: NetworkImage(widget.urlImage),
+              fit: BoxFit.cover,
+              alignment: const Alignment(-0.3, 0),
+            ),
+          ),
+        ),
+      );
 }

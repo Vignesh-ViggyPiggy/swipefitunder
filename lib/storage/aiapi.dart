@@ -351,7 +351,8 @@ class TryOnApiClient {
   //     return File("assets/icons/error_upload.jpg");
   //   }
   // }
-  Future<File?> generateVirtualTryOn(
+  //Future<File?> generateVirtualTryOn(
+  Future<Map<String, dynamic>?> generateVirtualTryOn(
       String humanImageUrl, String garmentImageUrl) async {
     const String apiKey = "r8_WztMDsolFmCtNunjVGD7d53ngx96ZOk2aXpye";
     if (apiKey.isEmpty) {
@@ -423,7 +424,11 @@ class TryOnApiClient {
                     File('${tempDir.path}/output_image.png');
                 await outputFile.writeAsBytes(imageResponse.bodyBytes);
                 print("Output image saved at: ${outputFile.path}");
-                return outputFile;
+                //return outputFile;
+                return {
+                  "outputFile": outputFile,
+                  "outputUrl": outputUrl,
+                };
               } else {
                 print(
                     "Failed to download the output image. Status: ${imageResponse.statusCode}");

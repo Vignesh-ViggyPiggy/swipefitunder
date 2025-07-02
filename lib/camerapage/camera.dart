@@ -34,6 +34,8 @@ class _CameraAppState extends State<CameraApp> {
   double start = 0.1;
   double y = 0.1;
 
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -48,7 +50,8 @@ class _CameraAppState extends State<CameraApp> {
   }
 
   void camer() {
-    controller = CameraController(widget.camera![cam], ResolutionPreset.high);
+    controller = CameraController(widget.camera![cam], ResolutionPreset.high,
+        enableAudio: false); //remove enableAudio: false if you want audio
     _currentFlashMode = controller.value.flashMode;
     _initializeControllerFuture = controller.initialize();
     _initializeControllerFuture.then((_) {
@@ -161,6 +164,10 @@ class _CameraAppState extends State<CameraApp> {
                 ),
                 child: IconButton(
                     onPressed: () async {
+                      setState(() {
+                        _isLoading = true;
+                      });
+
                       Future<XFile?> imagepick() async {
                         final XFile? image = await ImagePicker().pickImage(
                           maxWidth: 600,
@@ -172,6 +179,9 @@ class _CameraAppState extends State<CameraApp> {
                       imagepick().then((img) async => {
                             if (img != null)
                               {
+                                setState(() {
+                                  _isLoading = false;
+                                }),
                                 await Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (context) => UploadPage2(
@@ -182,7 +192,11 @@ class _CameraAppState extends State<CameraApp> {
                               }
                           });
                     },
-                    icon: const Icon(
+                    icon:
+                        //  _isLoading
+                        //     ? const CircularProgressIndicator()
+                        //     :
+                        const Icon(
                       Icons.add_a_photo_rounded,
                       color: Colors.white,
                     )),
@@ -204,7 +218,7 @@ class _CameraAppState extends State<CameraApp> {
                         uiSettings: [
                           AndroidUiSettings(
                             toolbarTitle: 'Crop Image',
-                            toolbarColor: Colors.cyan,
+                            toolbarColor: Colors.grey[900],
                             toolbarWidgetColor: Colors.white,
                             lockAspectRatio: true,
                             aspectRatioPresets: [
@@ -279,7 +293,7 @@ class _CameraAppState extends State<CameraApp> {
       showfocus == false
           ? Container()
           : Container(
-              color: Colors.red,
+              color: const Color.fromARGB(255, 102, 45, 41),
               height: 50,
               width: 50,
             )
